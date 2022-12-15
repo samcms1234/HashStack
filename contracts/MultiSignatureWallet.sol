@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./AccessRegistryContract.sol";
+
 contract MultiSignatureWallet {
     event Deposit(address indexed sender, uint amount);
     event Submit(uint indexed txId);
@@ -15,8 +17,17 @@ contract MultiSignatureWallet {
         bool executed;
     }
 
+    function getAddress() public view returns(address) {
+        return address(this);
+    }
+
     modifier onlyOwner() {
         require(isOwner[msg.sender], "not owner");
+        _;
+    }
+
+    modifier Onlyroot() {
+        require(msg.sender == root, "Only root user can call this function");
         _;
     }
 
@@ -38,11 +49,12 @@ contract MultiSignatureWallet {
     address[] public owners;
     mapping(address => bool) public isOwner;
     uint public required;
+    address public root;
 
     Transaction[] public transactions;
     mapping(uint => mapping(address => bool)) public approved;
 
-    constructor(address[] memory _owners, uint _required) {
+    constructor(address[] memory _owners, uint _required, address _root) {
         require( _owners.length > 2 , "owners required");
         require( _required > 0 && _required <= _owners.length, "Invalid number of owners" );
 
@@ -58,6 +70,7 @@ contract MultiSignatureWallet {
         }
 
         required = _required;
+        root = _root;
     }
 
     receive() external payable {
@@ -122,4 +135,36 @@ contract MultiSignatureWallet {
 
         emit Revoke(msg.sender, _txId);
     }
+
+    function revokeSignatoryRights(address _owner)
+    external
+    Onlyroot {
+        require(isOwner[_owner], "Not a owner");
+
+        uint index;
+        for(uint i; i < owners.length; i++) {
+            if(owners[i] == _owner) {
+                index = i;
+                break;
+            }
+        }
+
+        for(uint i = index ; i < owners.length - 1 ; i ++ ) {
+            owners[i] = owners[i+1];
+        }
+
+        owners.pop();
+
+        isOwner[_owner] = false;
+    }
+
+    function addingSignatoryRights(address _owner)
+    external
+    Onlyroot {
+        require(!isOwner[_owner], "the owner already exists");
+
+        owners.push(_owner);
+        isOwner[_owner] = true;
+    }
+ 
 }
