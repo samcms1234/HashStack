@@ -16,7 +16,7 @@ contract AccessRegistryContract {
     address[] public owners;
     mapping(address => bool) public isOwner;
 
-    MultiSignatureWallet multiSignatureWallet = new MultiSignatureWallet(owners, owner);
+    MultiSignatureWallet multiSignatureWallet;
 
     constructor(address[] memory _owners) {
 
@@ -36,6 +36,8 @@ contract AccessRegistryContract {
             owners.push(_owner);
             isOwner[_owners[i]] = true;
         }
+
+        multiSignatureWallet = new MultiSignatureWallet(_owners, owner);
     }
 
     function addingSignatories(address _owner) private onlyOwner {
