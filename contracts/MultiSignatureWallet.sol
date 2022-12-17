@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./AccessRegistryContract.sol";
 
 contract MultiSignatureWallet {
     event Deposit(address indexed sender, uint amount);
@@ -54,9 +53,10 @@ contract MultiSignatureWallet {
     Transaction[] public transactions;
     mapping(uint => mapping(address => bool)) public approved;
 
-    constructor(address[] memory _owners, uint _required, address _root) {
+    constructor(address[] memory _owners, address _root) {
         require( _owners.length > 2 , "owners required");
-        require( _required > 0 && _required <= _owners.length, "Invalid number of owners" );
+
+        required = _owners.length * 3 / 5;
 
         for(uint i; i < _owners.length; i++) {
             address owner = _owners[i];
@@ -69,7 +69,6 @@ contract MultiSignatureWallet {
 
         }
 
-        required = _required;
         root = _root;
     }
 
@@ -166,5 +165,5 @@ contract MultiSignatureWallet {
         owners.push(_owner);
         isOwner[_owner] = true;
     }
- 
+
 }
